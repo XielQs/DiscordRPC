@@ -8,13 +8,12 @@ TEST_DIR          = test
 BUILD_DIR         = build
 
 JANSSON_SRC       = $(LIB_DIR)/jansson
-JANSSON_LIB       = $(JANSSON_SRC)/build/lib/libjansson.a
 JANSSON_OBJS      = $(JANSSON_SRC)/build/CMakeFiles/jansson.dir/src/*.o
 
 CC                = clang
 CFLAGS            = -Wall -Wextra -O3 -std=c11 -MMD -MP -fPIC \
                     -I$(INC_DIR) -I$(JANSSON_SRC)/build/include
-LDFLAGS           = -L$(LIB_DIR) -L$(JANSSON_SRC)/build/src
+LDFLAGS           = -L$(LIB_DIR) -L$(JANSSON_SRC)/build/lib
 RM                = rm -rf
 
 SRCS              = $(wildcard $(SRC_DIR)/*.c)
@@ -26,8 +25,6 @@ DEPS              = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d)
 STATIC_LIB        = $(BUILD_DIR)/$(NAME).a
 SHARED_LIB        = $(BUILD_DIR)/$(NAME).so
 
-all: lib shared test
-
 $(JANSSON_OBJS):
 	@echo "Building Jansson objects..."
 	@cd $(JANSSON_SRC) && mkdir -p build && cd build && \
@@ -38,7 +35,7 @@ $(JANSSON_OBJS):
 $(STATIC_LIB): $(OBJS) $(JANSSON_OBJS)
 	@ar rcs $@ $^
 
-$(SHARED_LIB): $(OBJS) $(JANSSON_LIB)
+$(SHARED_LIB): $(OBJS) $(JANSSON_OBJS)
 	@$(CC) $(CFLAGS) -shared -o $@ $(OBJS) $(LDFLAGS) -ljansson
 
 $(BUILD_DIR):
@@ -57,14 +54,9 @@ clean:
 	@$(RM) $(BUILD_DIR)
 	@$(RM) $(JANSSON_SRC)/build
 
-fclean: clean
-	@$(RM) $(STATIC_LIB) $(SHARED_LIB)
-
-re: fclean all
-
 lib: $(STATIC_LIB)
 shared: $(SHARED_LIB)
 
 -include $(DEPS)
 
-.PHONY: all clean fclean re test lib shared
+.PHONY: clean test lib shared

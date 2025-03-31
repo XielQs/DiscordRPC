@@ -21,14 +21,14 @@ I only tested it on Linux amd64, probably it doesn't work on Windows because of 
 
 ## Installation
 
-1. Clone repo
+### Clone repo
 
 ```bash
 git clone https://github.com/XielQs/DiscordRPC --recursive
 cd DiscordRPC
 ```
 
-2. Build
+### Build
 
 If you want to build a static library, you can do it by running:
 
@@ -44,18 +44,21 @@ make shared -j
 
 ## Usage
 
-You need to link the library with your project. You can do this by adding `-ldiscordrpc` and `-ljansson` to your compiler flags.
+You can use the following example to initialize the library and set the activity:
 
 ```c
 #include <discordrpc.h>
+#include <string.h>
 #include <stdio.h>
 
 int main() {
     // Initialize Discord RPC
+    printf("Initializing Discord RPC...\n");
     DiscordRPC discord;
     memset(&discord, 0, sizeof(discord));
     DiscordRPC_init(&discord, "YOUR_CLIENT_ID", NULL);
     if (discord.connected) {
+        printf("Connected to Discord RPC successfully!\n");
         // Set the presence
         DiscordActivity activity;
         memset(&activity, 0, sizeof(activity));
@@ -65,8 +68,13 @@ int main() {
 
         DiscordRPC_setActivity(&discord, activity);
         // Run the main loop or do other stuff
+        while (1) {} // Keep the program running
         DiscordRPC_shutdown(&discord); // Shutdown Discord RPC
+    } else {
+        printf("Failed to connect to Discord RPC: %s\n", discord.lastError);
+        return 1;
     }
+    return 0;
 }
 ```
 
