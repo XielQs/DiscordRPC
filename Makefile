@@ -22,8 +22,8 @@ OBJS              = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 TEST_OBJS         = $(patsubst $(TEST_DIR)/%.c, $(BUILD_DIR)/%.o, $(TEST_SRCS))
 DEPS              = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d)
 
-STATIC_LIB        = $(BUILD_DIR)/lib$(NAME).a
-SHARED_LIB        = $(BUILD_DIR)/lib$(NAME).so
+STATIC_LIB        = $(BUILD_DIR)/$(NAME).a
+SHARED_LIB        = $(BUILD_DIR)/$(NAME).so
 
 all: lib shared test
 
