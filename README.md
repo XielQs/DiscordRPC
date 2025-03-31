@@ -34,7 +34,7 @@ cd DiscordRPC
 make lib -j
 ```
 
-It will create a shared library `libdiscordrpc.so` in main directory.
+It will create a shared library `libdiscordrpc.so` and a static library `libdiscordrpc.a` in the `build` folder.
 
 ## Usage
 
