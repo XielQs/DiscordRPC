@@ -290,7 +290,6 @@ void DiscordRPC_shutdown(DiscordRPC* self) {
         self->connected = false;
         pthread_join(self->readThread, NULL);
         pthread_join(self->messageThread, NULL);
-        free(self->clientId);
     }
 }
 
