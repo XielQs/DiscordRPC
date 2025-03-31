@@ -9,6 +9,10 @@
 #include "socketconnection.h"
 #include "queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     SocketConnection socket;
     bool connected;
@@ -33,5 +37,9 @@ bool DiscordRPC_write(DiscordRPC* self, void* data, size_t size);
 void* DiscordRPC_readThread(void* arg);
 void* DiscordRPC_messageProcessor(void* arg);
 const char* DiscordRPC_getTempPath(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DISCORDRPC_H

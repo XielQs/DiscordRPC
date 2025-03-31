@@ -3,6 +3,10 @@
 #define DISCORD_PARTY_PUBLIC 1
 #define DISCORD_PARTY_PRIVATE 2
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 typedef struct {
     const char* state;
@@ -22,5 +26,9 @@ typedef struct {
     const char* spectateSecret;
     int8_t instance;
 } DiscordActivity;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DISCORD_ACTIVITY_H

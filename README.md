@@ -30,15 +30,21 @@ cd DiscordRPC
 
 2. Build
 
+If you want to build a static library, you can do it by running:
+
 ```bash
 make lib -j
 ```
 
-It will create a shared library `libdiscordrpc.so` and a static library `libdiscordrpc.a` in the `build` folder.
+If you want to build a shared library, you can do it by running:
+
+```bash
+make shared -j
+```
 
 ## Usage
 
-You need to link the library with your project. You can do this by adding `-ldiscordrpc` to your compiler flags.
+You need to link the library with your project. You can do this by adding `-ldiscordrpc` and `-ljansson` to your compiler flags.
 
 ```c
 #include <discordrpc.h>

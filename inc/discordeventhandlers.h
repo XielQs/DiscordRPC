@@ -2,6 +2,10 @@
 #define DISCORD_EVENTHANDLERS_H
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     const char* userId;
     const char* username;
@@ -17,5 +21,9 @@ typedef struct {
     void (*spectateGame)(const char* spectateSecret);
     void (*joinRequest)(const DiscordUser* request);
 } DiscordEventHandlers;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // DISCORD_EVENTHANDLERS_H

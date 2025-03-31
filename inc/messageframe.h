@@ -2,6 +2,10 @@
 
 #define MaxRpcFrameSize 4096
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     Handshake = 0,
     Frame = 1,
@@ -19,3 +23,8 @@ typedef struct {
     MessageFrameHeader header;
     char message[MaxRpcFrameSize - sizeof(MessageFrameHeader)];
 } MessageFrame;
+
+#ifdef __cplusplus
+}
+#endif
+
