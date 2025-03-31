@@ -435,7 +435,6 @@ void* DiscordRPC_readThread(void* arg) {
         json_error_t error;
         json_t* json = json_loads(frame.message, 0, &error);
         if (!json) {
-            printf("JSON error: %s\n", frame.message);
             self->last_error = "JSON parsing failed.";
             continue;
         }
