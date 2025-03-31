@@ -9,11 +9,12 @@ BUILD_DIR         = build
 
 JANSSON_SRC       = $(LIB_DIR)/jansson
 JANSSON_LIB       = $(JANSSON_SRC)/build/lib/libjansson.a
+JANSSON_OBJS      = $(JANSSON_SRC)/build/CMakeFiles/jansson.dir/src/*.o
 
 CC                = clang
 CFLAGS            = -Wall -Wextra -O3 -std=c11 -MMD -MP -fPIC \
-                    -I$(INC_DIR) -I$(JANSSON_SRC)/src
-LDFLAGS           = -L$(LIB_DIR) -L$(JANSSON_SRC)/build/src -ljansson
+                    -I$(INC_DIR) -I$(JANSSON_SRC)/build/include
+LDFLAGS           = -L$(LIB_DIR) -L$(JANSSON_SRC)/build/src
 RM                = rm -rf
 
 SRCS              = $(wildcard $(SRC_DIR)/*.c)
@@ -27,16 +28,18 @@ SHARED_LIB        = $(BUILD_DIR)/$(NAME).so
 
 all: lib shared test
 
-$(JANSSON_LIB):
-	@echo "Building Jansson..."
-	@cd $(JANSSON_SRC) && mkdir -p build && cd build && cmake .. -DJANSSON_BUILD_DOCS=OFF && make
-	@echo "Jansson built successfully."
+$(JANSSON_OBJS):
+	@echo "Building Jansson objects..."
+	@cd $(JANSSON_SRC) && mkdir -p build && cd build && \
+		cmake .. -DJANSSON_BUILD_DOCS=OFF -DJANSSON_BUILD_SHARED_LIBS=OFF && \
+		make
+	@echo "Jansson objects ready."
 
-$(STATIC_LIB): $(OBJS)
-	@ar rcs $@ $(OBJS)
+$(STATIC_LIB): $(OBJS) $(JANSSON_OBJS)
+	@ar rcs $@ $^
 
-$(SHARED_LIB): $(OBJS)
-	@$(CC) $(CFLAGS) -shared -o $@ $(OBJS) $(LDFLAGS)
+$(SHARED_LIB): $(OBJS) $(JANSSON_LIB)
+	@$(CC) $(CFLAGS) -shared -o $@ $(OBJS) $(LDFLAGS) -ljansson
 
 $(BUILD_DIR):
 	@mkdir -p $@
@@ -47,8 +50,8 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-test: $(TEST_OBJS) $(STATIC_LIB) $(JANSSON_LIB)
-	@$(CC) $(CFLAGS) $(TEST_OBJS) $(STATIC_LIB) $(JANSSON_LIB) -o $(BUILD_DIR)/$(TEST_NAME)
+test: $(TEST_OBJS) $(STATIC_LIB)
+	@$(CC) $(CFLAGS) $(TEST_OBJS) $(STATIC_LIB) -o $(BUILD_DIR)/$(TEST_NAME)
 
 clean:
 	@$(RM) $(BUILD_DIR)
