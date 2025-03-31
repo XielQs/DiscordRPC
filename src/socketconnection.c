@@ -1,20 +1,16 @@
-#define _POSIX_C_SOURCE 200809L
 #include "socketconnection.h"
-#include <sys/socket.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/un.h>
-#include <string.h>
 #include <errno.h>
 
 #define MSG_FLAGS 0
 
-bool SocketConnection_init(SocketConnection* conn, const char* ipc_path) {
+bool SocketConnection_init(SocketConnection* conn, const char* ipc_path, DisconnectCallback on_disconnect,
+                            void* callback_data) {
     conn->ipc_path = strdup(ipc_path);
     conn->sock = socket(AF_UNIX, SOCK_STREAM, 0);
     conn->nonce = 0;
+    conn->connected = false;
+    conn->on_disconnect = on_disconnect;
+    conn->callback_data = callback_data;
 
     if (conn->sock < 0) {
         return false;
@@ -40,6 +36,9 @@ void SocketConnection_shutdown(SocketConnection* conn) {
     if (conn->connected) {
         close(conn->sock);
         conn->connected = false;
+        if (conn->on_disconnect) {
+            conn->on_disconnect(conn, conn->callback_data);
+        }
     }
 }
 
@@ -48,10 +47,10 @@ bool SocketConnection_read(SocketConnection* conn, void* buffer, size_t size) {
         return false;
     }
 
-    size_t bytesRead = 0;
-    while (bytesRead < size) {
-        ssize_t res = recv(conn->sock, (char*)buffer + bytesRead, size - bytesRead, MSG_FLAGS);
-        
+    size_t bytes_read = 0;
+    while (bytes_read < size) {
+        ssize_t res = recv(conn->sock, (char*)buffer + bytes_read, size - bytes_read, MSG_FLAGS);
+
         if (res < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 continue;
@@ -65,27 +64,26 @@ bool SocketConnection_read(SocketConnection* conn, void* buffer, size_t size) {
             return false;
         }
 
-        bytesRead += res;
+        bytes_read += res;
     }
 
-    return bytesRead == size;
+    return bytes_read == size;
 }
-
 
 bool SocketConnection_write(SocketConnection* conn, const void* buffer, size_t size) {
     if (!conn->connected) {
         return false;
     }
 
-    size_t bytesSent = 0;
-    while (bytesSent < size) {
-        ssize_t sentBytes = send(conn->sock, (const char*)buffer + bytesSent, size - bytesSent, MSG_FLAGS);
-        if (sentBytes < 0) {
+    size_t bytes_sent = 0;
+    while (bytes_sent < size) {
+        ssize_t sent_bytes = send(conn->sock, (const char*)buffer + bytes_sent, size - bytes_sent, MSG_FLAGS);
+        if (sent_bytes < 0) {
             SocketConnection_shutdown(conn);
             return false;
         }
-        bytesSent += sentBytes;
+        bytes_sent += sent_bytes;
     }
 
-    return bytesSent == size;
+    return bytes_sent == size;
 }

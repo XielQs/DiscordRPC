@@ -4,30 +4,42 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "socketconnection.h"
 #include "discordeventhandlers.h"
 #include "discordactivity.h"
-#include "socketconnection.h"
 #include "queue.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef enum {
+    SentHandshake = 0,
+    Connected = 1,
+    Disconnected = 2
+} SocketState;
+
 typedef struct {
     SocketConnection socket;
+    SocketState state;
+    DiscordUser user;
     bool connected;
-    char* clientId;
-    char* lastError;
-    pthread_t readThread;
-    pthread_t messageThread;
+    char* client_id;
+    char* last_error;
+    pthread_t read_thread;
+    pthread_t message_thread;
     DiscordEventHandlers handlers;
     MessageQueue queue;
 } DiscordRPC;
 
-void DiscordRPC_init(DiscordRPC* self, const char* clientId, DiscordEventHandlers* handlers);
+void DiscordRPC_init(DiscordRPC* self, const char* client_id, DiscordEventHandlers* handlers);
 void DiscordRPC_shutdown(DiscordRPC* self);
-void DiscordRPC_setActivity(DiscordRPC* self, DiscordActivity activity);
+void DiscordRPC_setActivity(DiscordRPC* self, DiscordActivity *activity);
+void DiscordRPC_sendInviteResponse(DiscordRPC* self, const char* user_id, char* response);
+void DiscordRPC_acceptInvite(DiscordRPC* self, const char* user_id);
+void DiscordRPC_declineInvite(DiscordRPC* self, const char* user_id);
 bool DiscordRPC_openSocket(DiscordRPC* self);
+void DiscordRPC_onDisconnect(SocketConnection* socket, void* data);
 bool DiscordRPC_sendHandshake(DiscordRPC* self);
 void DiscordRPC_initHandlers(DiscordRPC* self);
 bool DiscordRPC_readMessage(DiscordRPC* self, MessageFrame* frame);

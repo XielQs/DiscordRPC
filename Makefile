@@ -11,7 +11,7 @@ JANSSON_SRC       = $(LIB_DIR)/jansson
 JANSSON_OBJS      = $(JANSSON_SRC)/build/CMakeFiles/jansson.dir/src/*.o
 
 CC                = clang
-CFLAGS            = -Wall -Wextra -O3 -std=c11 -MMD -MP -fPIC \
+CFLAGS            = -Wall -Wextra -std=c11 -MMD -MP -fPIC \
                     -I$(INC_DIR) -I$(JANSSON_SRC)/build/include
 LDFLAGS           = -L$(LIB_DIR) -L$(JANSSON_SRC)/build/lib
 RM                = rm -rf
@@ -24,6 +24,12 @@ DEPS              = $(OBJS:.o=.d) $(TEST_OBJS:.o=.d)
 
 STATIC_LIB        = $(BUILD_DIR)/$(NAME).a
 SHARED_LIB        = $(BUILD_DIR)/$(NAME).so
+
+ifeq ($(MAKECMDGOALS), test)
+		CFLAGS += -O0 -g3 -ggdb3
+else
+		CFLAGS += -O3
+endif
 
 $(JANSSON_OBJS):
 	@echo "Building Jansson objects..."

@@ -2,7 +2,7 @@
 
 Simple and easy to use Discord Rich Presence library for C.
 
-Official library is deprecated and not maintained anymore. So I decided to create a new one, but with some improvements and bug fixes.
+Official library is deprecated and not maintained anymore and it SUCKS. So I decided to create a new one, but with some improvements and bug fixes.
 
 ## Features
 
@@ -51,12 +51,18 @@ You can use the following example to initialize the library and set the activity
 #include <string.h>
 #include <stdio.h>
 
+void readyEvent(const DiscordUser* user) {
+    printf("Discord RPC is ready. User ID: %s, Username: %s, Global Name: %s\n", user->id, user->username, user->global_name);
+}
+
 int main() {
     // Initialize Discord RPC
     printf("Initializing Discord RPC...\n");
     DiscordRPC discord;
-    memset(&discord, 0, sizeof(discord));
-    DiscordRPC_init(&discord, "YOUR_CLIENT_ID", NULL);
+    DiscordEventHandlers handlers;
+    memset(&handlers, 0, sizeof(handlers));
+    handlers.ready = readyEvent;
+    DiscordRPC_init(&discord, "YOUR_CLIENT_ID", &handlers); // You can pass NULL for handlers if you don't need them
     if (discord.connected) {
         printf("Connected to Discord RPC successfully!\n");
         // Set the presence
@@ -66,7 +72,7 @@ int main() {
         activity.details = "Example Details";
         activity.startTimestamp = time(NULL);
 
-        DiscordRPC_setActivity(&discord, activity);
+        DiscordRPC_setActivity(&discord, &activity);
         // Run the main loop or do other stuff
         while (1) {} // Keep the program running
         DiscordRPC_shutdown(&discord); // Shutdown Discord RPC
@@ -80,7 +86,7 @@ int main() {
 
 ## Known Issues
 
-- There is no way to handle events yet, so you can't handle the `onReady` and `onDisconnected` events. You can only check if the connection is established or not.
+- There is no known issues at the moment, but if you find any, please open an issue on GitHub.
 
 ## API Reference
 
@@ -88,15 +94,21 @@ It is nearly the same as the official library, you can find the official documen
 
 But if you want an overview of the API, here it is:
 
-- `DiscordRPC_init(DiscordRPC* discord, const char* clientId, DiscordEventHandlers* handlers)` - Initialize Discord RPC
+- `DiscordRPC_init(DiscordRPC* discord, const char* client_id, DiscordEventHandlers* handlers)` - Initialize Discord RPC
   - `discord` - Pointer to the DiscordRPC struct
-  - `clientId` - Your Discord application client ID
-  - `handlers` - Pointer to the DiscordEventHandlers struct (not implemented yet, pass NULL)
+  - `client_id` - Your Discord application client ID
+  - `handlers` - Pointer to the DiscordEventHandlers struct
 - `DiscordRPC_shutdown(DiscordRPC* discord)` - Shutdown Discord RPC
   - `discord` - Pointer to the DiscordRPC struct
-- `DiscordRPC_setActivity(DiscordRPC* discord, DiscordActivity activity)` - Set the activity
+- `DiscordRPC_setActivity(DiscordRPC* discord, DiscordActivity* activity)` - Set the activity
   - `discord` - Pointer to the DiscordRPC struct
-  - `activity` - DiscordActivity struct containing the activity data (pass NULL to clear the activity)
+  - `activity` - Pointer to the DiscordActivity struct containing the activity data (pass NULL to clear the activity)
+- `DiscordRPC_acceptInvite(DiscordRPC* discord, const char* user_id)` - Accept an invite from a user
+  - `discord` - Pointer to the DiscordRPC struct
+  - `user_id` - The ID of the user to accept the invite from
+- `DiscordRPC_declineInvite(DiscordRPC* discord, const char* user_id)` - Decline an invite from a user
+  - `discord` - Pointer to the DiscordRPC struct
+  - `user_id` - The ID of the user to decline the invite from
 - `DiscordActivity` - Struct containing the activity data
   - `state` - The state of the activity (e.g. "Playing")
   - `details` - The details of the activity (e.g. "Playing a game")
@@ -114,6 +126,13 @@ But if you want an overview of the API, here it is:
   - `joinSecret` - The secret to join the party
   - `spectateSecret` - The secret to spectate the party
   - `instance` - Whether the activity is an instance or not (1 for true, 0 for false)
+- `DiscordEventHandlers` - Struct containing the event handlers
+  - `ready(const DiscordUser* user)` - Called when Discord RPC is ready
+  - `disconnected(const bool was_error)` - Called when Discord RPC is disconnected
+  - `error(int error_code, const char* message)` - Called when there is an error
+  - `joinGame(const char* join_secret)` - Called when the user joins another users game
+  - `spectateGame(const char* spectate_secret)` - Called when the user spectates another users game
+  - `joinRequest(const DiscordUser* user)` - Called when there is a pending join request from a user
 
 ## License
 

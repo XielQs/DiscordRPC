@@ -1,13 +1,15 @@
 #ifndef DISCORD_ACTIVITY_H
 #define DISCORD_ACTIVITY_H
+#define DISCORD_PARTY_PRIVATE 0
 #define DISCORD_PARTY_PUBLIC 1
-#define DISCORD_PARTY_PRIVATE 2
+
+#include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdint.h>
 typedef struct {
     const char* state;
     const char* details;
@@ -24,7 +26,7 @@ typedef struct {
     const char* matchSecret;
     const char* joinSecret;
     const char* spectateSecret;
-    int8_t instance;
+    bool instance;
 } DiscordActivity;
 
 #ifdef __cplusplus
