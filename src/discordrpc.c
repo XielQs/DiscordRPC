@@ -1,8 +1,8 @@
 #define _DEFAULT_SOURCE
 #include "discordrpc.h"
 #include "queue.h"
+#include "jansson.h"
 #include <string.h>
-#include <jansson.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
