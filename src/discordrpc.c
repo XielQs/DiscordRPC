@@ -345,7 +345,6 @@ bool DiscordRPC_readMessage(DiscordRPC* self, MessageFrame* frame) {
 
     size_t message_size = frame->header.length;
     if (message_size > (MaxRpcFrameSize - sizeof(MessageFrameHeader))) {
-        free(frame->message);
         self->last_error = "Message size exceeds maximum limit.";
         return false;
     }
@@ -357,7 +356,6 @@ bool DiscordRPC_readMessage(DiscordRPC* self, MessageFrame* frame) {
 
     success = DiscordRPC_read(self, frame->message, message_size);
     if (!success) {
-        free(frame->message);
         self->last_error = "Message data reading failed.";
         return false;
     }
