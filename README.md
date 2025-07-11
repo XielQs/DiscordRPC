@@ -77,7 +77,7 @@ int main() {
         while (1) {} // Keep the program running
         DiscordRPC_shutdown(&discord); // Shutdown Discord RPC
     } else {
-        printf("Failed to connect to Discord RPC: %s\n", discord.lastError);
+        printf("Failed to connect to Discord RPC: %s\n", discord.last_error);
         return 1;
     }
     return 0;
@@ -86,7 +86,7 @@ int main() {
 
 ## Known Issues
 
-- There is no known issues at the moment, but if you find any, please open an issue on GitHub.
+- The library will fail with error `Socket connection failed.` if Discord is running in a Flatpak. One possible way to solve the issue temporarily is by running `ln -sf $XDG_RUNTIME_DIR/{app/com.discordapp.Discord,}/discord-ipc-0` in the terminal.
 
 ## API Reference
 
