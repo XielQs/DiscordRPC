@@ -52,7 +52,10 @@ bool SocketConnection_read(SocketConnection* conn, void* buffer, size_t size) {
         ssize_t res = recv(conn->sock, (char*)buffer + bytes_read, size - bytes_read, MSG_FLAGS);
 
         if (res < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            if (errno == EAGAIN) {
+                usleep(1000);
+                continue;
+            } else if (errno == EWOULDBLOCK) {
                 continue;
             }
             SocketConnection_shutdown(conn);

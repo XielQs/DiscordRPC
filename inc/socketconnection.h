@@ -1,5 +1,6 @@
 #ifndef SOCKET_CONNECTION_H
 #define SOCKET_CONNECTION_H
+#define _DEFAULT_SOURCE 1
 #define _POSIX_C_SOURCE 200809L
 
 #include <stddef.h>

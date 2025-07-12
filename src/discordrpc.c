@@ -261,16 +261,15 @@ void DiscordRPC_initHandlers(DiscordRPC* self) {
         self->last_error = "DiscordRPC instance is NULL.";
         return;
     }
-    if (self->handlers.joinRequest || self->handlers.joinGame || self->handlers.spectateGame) {
-        if (self->handlers.joinRequest) {
-            DiscordRPC_registerEvent(self, "ACTIVITY_JOIN_REQUEST");
-        }
-        if (self->handlers.joinGame) {
-            DiscordRPC_registerEvent(self, "ACTIVITY_JOIN");
-        }
-        if (self->handlers.spectateGame) {
-            DiscordRPC_registerEvent(self, "ACTIVITY_SPECTATE");
-        }
+
+    if (self->handlers.joinRequest) {
+        DiscordRPC_registerEvent(self, "ACTIVITY_JOIN_REQUEST");
+    }
+    else if (self->handlers.joinGame) {
+        DiscordRPC_registerEvent(self, "ACTIVITY_JOIN");
+    }
+    else if (self->handlers.spectateGame) {
+        DiscordRPC_registerEvent(self, "ACTIVITY_SPECTATE");
     }
 }
 
@@ -359,7 +358,7 @@ bool DiscordRPC_readMessage(DiscordRPC* self, MessageFrame* frame) {
         self->last_error = "Message data reading failed.";
         return false;
     }
-
+    
     return true;
 }
 
@@ -368,7 +367,7 @@ bool DiscordRPC_write(DiscordRPC* self, void* data, size_t size) {
         self->last_error = "Connection is not established.";
         return false;
     }
-
+    
     return SocketConnection_write(&self->socket, data, size);
 }
 
@@ -419,39 +418,10 @@ const char* DiscordRPC_getTempPath(void) {
     return "/tmp";
 }
 
-void* DiscordRPC_readThread(void* arg) {
-    DiscordRPC* self = (DiscordRPC*)arg;
-    MessageFrame frame;
-
-    while (self->connected) {
-        if (!DiscordRPC_readMessage(self, &frame)) {
-            self->last_error = "Message reading failed.";
-            continue;
-        }
-        frame.message[frame.header.length] = '\0'; // null-terminate the message
-        // parse message as json
-        json_error_t error;
-        json_t* json = json_loads(frame.message, 0, &error);
-        if (!json) {
-            self->last_error = "JSON parsing failed.";
-            continue;
-        }
-        if (!json_is_object(json)) {
-            self->last_error = "JSON is not an object.";
-            json_decref(json);
-            continue;
-        }
-        // get event string
-        const char* event = json_string_value(json_object_get(json, "evt"));
-        const char* cmd = json_string_value(json_object_get(json, "cmd"));
-        json_t* data = json_object_get(json, "data");
-        if (!cmd) {
-            self->last_error = "Cmd is not a string.";
-            json_decref(json);
-            continue;
-        }
-        // check if event is ready
-        if (event && strcmp(event, "READY") == 0 && strcmp(cmd, "DISPATCH") == 0) {
+void DiscordRPC_handleEvent(DiscordRPC *self, json_t* data, const char *cmd, const char *event) {
+    /* Check if cmd is DISPATCH only once. */
+    if (strcmp(cmd, "DISPATCH") == 0) {
+        if (strcmp(event, "READY") == 0) {
             self->state = SentHandshake;
             // call ready event handler
             if (self->handlers.ready) {
@@ -475,21 +445,21 @@ void* DiscordRPC_readThread(void* arg) {
                 }
             }
         }
-        if (event && strcmp(event, "ACTIVITY_JOIN") == 0 && strcmp(cmd, "DISPATCH") == 0) {
+        else if (strcmp(event, "ACTIVITY_JOIN") == 0) {
             // call join game event handler
             if (self->handlers.joinGame) {
                 const char* join_secret = json_string_value(json_object_get(data, "secret"));
                 self->handlers.joinGame(join_secret);
             }
         }
-        if (event && strcmp(event, "ACTIVITY_SPECTATE") == 0 && strcmp(cmd, "DISPATCH") == 0) {
+        else if (strcmp(event, "ACTIVITY_SPECTATE") == 0) {
             // call spectate game event handler
             if (self->handlers.spectateGame) {
                 const char* spectate_secret = json_string_value(json_object_get(data, "secret"));
                 self->handlers.spectateGame(spectate_secret);
             }
         }
-        if (event && strcmp(event, "ACTIVITY_JOIN_REQUEST") == 0 && strcmp(cmd, "DISPATCH") == 0) {
+        else if (strcmp(event, "ACTIVITY_JOIN_REQUEST") == 0) {
             // call join request event handler
             if (self->handlers.joinRequest) {
                 DiscordUser user;
@@ -511,14 +481,61 @@ void* DiscordRPC_readThread(void* arg) {
                 }
             }
         }
-        if (event && strcmp(event, "ERROR") == 0) {
-            // call error event handler
-            if (self->handlers.error) {
-                const char* error_message = json_string_value(json_object_get(data, "message"));
-                int error_code = json_integer_value(json_object_get(data, "code"));
-                self->handlers.error(error_code, error_message);
-            }
+    }
+
+    if (strcmp(event, "ERROR") == 0) {
+        // call error event handler
+        if (self->handlers.error) {
+            const char* error_message = json_string_value(json_object_get(data, "message"));
+            int error_code = json_integer_value(json_object_get(data, "code"));
+            self->handlers.error(error_code, error_message);
         }
+    }
+}
+
+void* DiscordRPC_readThread(void* arg) {
+    DiscordRPC* self = (DiscordRPC*)arg;
+    MessageFrame frame;
+    
+    while (self->connected) {
+        json_t* json = NULL;
+        const char *event;
+        const char *cmd;
+        json_t *data;
+
+        if (!DiscordRPC_readMessage(self, &frame)) {
+            self->last_error = "Message reading failed.";
+            goto done;
+        }
+        frame.message[frame.header.length] = '\0'; // null-terminate the message
+        // parse message as json
+        json_error_t error;
+        json = json_loads(frame.message, 0, &error);
+        if (!json) {
+            self->last_error = "JSON parsing failed.";
+            goto done;
+        }
+
+        if (!json_is_object(json)) {
+            self->last_error = "JSON is not an object.";
+            goto done;
+        }
+
+        // get cmd string
+        cmd = json_string_value(json_object_get(json, "cmd"));
+
+        if (!cmd) {
+            self->last_error = "Cmd is not a string.";
+            goto done;
+        }
+        
+        event = json_string_value(json_object_get(json, "evt"));
+        data = json_object_get(json, "data");
+
+        // check if event is ready
+        if (event)
+            DiscordRPC_handleEvent(self, data, cmd, event);
+
         if (frame.header.opcode == Ping) {
             MessageFrame pong_frame;
             pong_frame.header.opcode = Pong;
@@ -527,7 +544,13 @@ void* DiscordRPC_readThread(void* arg) {
                 self->last_error = "Pong message writing failed.";
             }
         }
-        json_decref(json);
+
+    done:
+        if (json) {
+            json_decref(json);
+        }
+
+        usleep(10000);
     }
 
     return NULL;
@@ -539,8 +562,8 @@ void* DiscordRPC_messageProcessor(void* arg) {
 
     while (self->connected) {
         if (Queue_isEmpty(&self->queue) || self->state != SentHandshake) {
-            // wait for 50ms
-            usleep(50000);
+            // wait for 100ms
+            usleep(100000);
             continue;
         }
 
