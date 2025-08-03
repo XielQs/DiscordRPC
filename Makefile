@@ -34,7 +34,7 @@ endif
 $(JANSSON_OBJS):
 	@echo "Building Jansson objects..."
 	@cd $(JANSSON_SRC) && mkdir -p build && cd build && \
-		cmake .. -DJANSSON_BUILD_DOCS=OFF -DJANSSON_BUILD_SHARED_LIBS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && \
+		cmake .. -G "Unix Makefiles" -DJANSSON_BUILD_DOCS=OFF -DJANSSON_BUILD_SHARED_LIBS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && \
 		make
 	@echo "Jansson objects ready."
 
