@@ -38,10 +38,10 @@ $(JANSSON_OBJS):
 		make
 	@echo "Jansson objects ready."
 
-$(STATIC_LIB): $(OBJS) $(JANSSON_OBJS)
+$(STATIC_LIB): $(JANSSON_OBJS) $(OBJS) 
 	@ar rcs $@ $^
 
-$(SHARED_LIB): $(OBJS) $(JANSSON_OBJS)
+$(SHARED_LIB): $(JANSSON_OBJS) $(OBJS) 
 	@$(CC) $(CFLAGS) -shared -o $@ $(OBJS) $(LDFLAGS) -ljansson
 
 $(BUILD_DIR):
