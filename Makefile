@@ -31,18 +31,18 @@ else
 		CFLAGS += -O3
 endif
 
+$(STATIC_LIB): $(JANSSON_OBJS) $(OBJS) 
+	@ar rcs $@ $^
+
+$(SHARED_LIB): $(JANSSON_OBJS) $(OBJS) 
+	@$(CC) $(CFLAGS) -shared -o $@ $(OBJS) $(LDFLAGS) -ljansson
+
 $(JANSSON_OBJS):
 	@echo "Building Jansson objects..."
 	@cd $(JANSSON_SRC) && mkdir -p build && cd build && \
 		cmake .. -G "Unix Makefiles" -DJANSSON_BUILD_DOCS=OFF -DJANSSON_BUILD_SHARED_LIBS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && \
 		make
 	@echo "Jansson objects ready."
-
-$(STATIC_LIB): $(JANSSON_OBJS) $(OBJS) 
-	@ar rcs $@ $^
-
-$(SHARED_LIB): $(JANSSON_OBJS) $(OBJS) 
-	@$(CC) $(CFLAGS) -shared -o $@ $(OBJS) $(LDFLAGS) -ljansson
 
 $(BUILD_DIR):
 	@mkdir -p $@
